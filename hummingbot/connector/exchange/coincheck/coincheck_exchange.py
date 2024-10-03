@@ -3,6 +3,7 @@ import json
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 from urllib.parse import urlencode
+import ast
 
 import aiohttp
 from bidict import bidict
@@ -457,35 +458,20 @@ class CoincheckExchange(ExchangePyBase):
 
     async def _update_balances(self):
         balance_info=await self.http_request_coincheck(CONSTANTS.ACCOUNTS_BALANCE_PATH_URL)
-        a = 'BBBB'
+        #self.logger().error(balance_info)
 
-       # self.logger().info(f"XXX        if balance_info["success"] == True:
-       #  self.logger().info(f"Current_JPY:"+balance_info["jpy"])
-       #  elif balance_info["success"] == False:
-       #      self.logger().error(f"Error Request:"+balance_info)
-       #      return
-       #  if self._account_type is None:
-       #      await self._update_account_type()
 
-        balances = await self._api_request(
-            method=RESTMethod.GET,
-            path_url=CONSTANTS.BALANCE_PATH_URL,
-            params={
-                'accountType': self._account_type
-            },
-            is_auth_required=True
-        )
-        # if balances["retCode"] != 0:
-        #     raise ValueError(f"{balances['retMsg']}")
         self._account_available_balances.clear()
         self._account_balances.clear()
-        # for coin in balances["result"]["list"][0]["coin"]:
-        #     name = coin["coin"]
-        #     free_balance = Decimal(coin["free"]) if self._account_type == "SPOT" \
-        #         else Decimal(coin["availableToWithdraw"])
-        #     balance = Decimal(coin["walletBalance"])
-        #     self._account_available_balances[name] = free_balance
-        #     self._account_balances[name] = Decimal(balance)
+        if balance_info["success"] != True:
+            raise ValueError(f"{balance_info['success']}")
+
+        for coin in balance_info:
+            if (float(balance_info[coin]) > 0):
+                self.logger().error(f"{coin}:{float(balance_info[coin])}")
+                self._account_available_balances[coin] = float(balance_info[coin])
+                self._account_balances[coin] = Decimal(balance_info[coin])
+                
 
     def _initialize_trading_pair_symbols_from_exchange_info(self, exchange_info: Dict[str, Any]):
         mapping = bidict()

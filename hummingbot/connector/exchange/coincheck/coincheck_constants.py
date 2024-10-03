@@ -28,6 +28,8 @@ ORDER_PATH_URL = "/exchange/orders"
 ORDER_STATUS="/exchange/orders/opens"
 COINCHECK_USER_STREAM_PATH_URL = "/userDataStream"
 
+BALANCE_PATH_URL=""
+
 WS_HEARTBEAT_TIME_INTERVAL = 30
 
 # Coincheck params
