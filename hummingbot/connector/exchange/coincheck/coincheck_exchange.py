@@ -458,7 +458,7 @@ class CoincheckExchange(ExchangePyBase):
 
     async def _update_balances(self):
         balance_info=await self.http_request_coincheck(CONSTANTS.ACCOUNTS_BALANCE_PATH_URL)
-        #self.logger().error(balance_info)
+        self.logger().error(balance_info) # This is most important
 
 
         self._account_available_balances.clear()
