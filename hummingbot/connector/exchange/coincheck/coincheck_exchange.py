@@ -467,7 +467,8 @@ class CoincheckExchange(ExchangePyBase):
             raise ValueError(f"{balance_info['success']}")
 
         for coin in balance_info:
-            if (float(balance_info[coin]) > 0):
+            self.logger().error(f"{coin}:{float(balance_info[coin])}")
+            if (float(balance_info[coin]) > 0 and coin != "success"):
                 self.logger().error(f"{coin}:{float(balance_info[coin])}")
                 self._account_available_balances[coin] = float(balance_info[coin])
                 self._account_balances[coin] = Decimal(balance_info[coin])
