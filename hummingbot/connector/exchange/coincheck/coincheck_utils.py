@@ -7,11 +7,16 @@ from hummingbot.client.config.config_data_types import BaseConnectorConfigMap, C
 CENTRALIZED = True
 
 def is_exchange_information_valid(exchange_info: Dict[str, Any]) -> bool:
-    is_spot = True
-    is_trading = False
-    if exchange_info.get("status", None) == "available":
-        is_trading = True
-    return is_trading and is_spot
+    # is_spot = True
+    # is_trading = False
+    # if exchange_info.get("status", None) == "available":
+    #     is_trading = True
+    # return is_trading and is_spot
+    return (
+        exchange_info['status'] == 'available' and
+        exchange_info['availability']['market_order'] and
+        exchange_info['availability']['order']
+    )
 
 class CoincheckConfigMap(BaseConnectorConfigMap):
     connector: str = Field(default="coincheck", const=True, client_data=None)

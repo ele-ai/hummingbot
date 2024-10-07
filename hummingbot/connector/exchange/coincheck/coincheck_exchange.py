@@ -458,7 +458,7 @@ class CoincheckExchange(ExchangePyBase):
 
     async def _update_balances(self):
         balance_info=await self.http_request_coincheck(CONSTANTS.ACCOUNTS_BALANCE_PATH_URL)
-        self.logger().error(balance_info) # This is most important
+        # self.logger().error(balance_info) # This is most important
 
 
         self._account_available_balances.clear()
@@ -469,16 +469,24 @@ class CoincheckExchange(ExchangePyBase):
         for coin in balance_info:
             self.logger().error(f"{coin}:{float(balance_info[coin])}")
             if (float(balance_info[coin]) > 0 and coin != "success"):
-                self.logger().error(f"{coin}:{float(balance_info[coin])}")
+                # self.logger().error(f"{coin}:{float(balance_info[coin])}")
                 self._account_available_balances[coin] = float(balance_info[coin])
                 self._account_balances[coin] = Decimal(balance_info[coin])
                 
 
     def _initialize_trading_pair_symbols_from_exchange_info(self, exchange_info: Dict[str, Any]):
         mapping = bidict()
+        # self.logger().error(f"exchange_info: {exchange_info}")
         for symbol_data in filter(coincheck_utils.is_exchange_information_valid, exchange_info["exchange_status"]):
-            current_symbol=str(symbol_data["pair"]).split("_")[0]
-            mapping[current_symbol] = combine_to_hb_trading_pair(base=current_symbol,quote="jpy")
+            pair = symbol_data["pair"]
+            base, quote = pair.split("_")
+            self.logger().error(f"base: {base},quote: {quote}")
+            hb_trading_pair = combine_to_hb_trading_pair(base=base,quote=quote)
+            mapping[base] = hb_trading_pair
+            # current_symbol=str(symbol_data["pair"]).split("_")[0]
+            # mapping[current_symbol] = combine_to_hb_trading_pair(base=current_symbol,quote="jpy")
+            
+        self.logger().error(f"mapping: {mapping}")
         self._set_trading_pair_symbol_map(mapping)
 
     async def _get_last_traded_price(self, trading_pair: str) -> float:
