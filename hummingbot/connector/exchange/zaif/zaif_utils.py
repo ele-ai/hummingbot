@@ -1,33 +1,41 @@
+import logging
+from decimal import Decimal
 from typing import Any, Dict
 
 from pydantic import Field, SecretStr
 
 from hummingbot.client.config.config_data_types import BaseConnectorConfigMap, ClientFieldData
+from hummingbot.core.data_type.trade_fee import TradeFeeSchema
 
 CENTRALIZED = True
 
-def is_exchange_information_valid(exchange_info: Dict[str, Any]) -> bool:
-    is_spot = True
-    is_trading = False
-    if exchange_info.get("status", None) == "available":
-        is_trading = True
-    return is_trading and is_spot
+EXAMPLE_PAIR = "BTC-JPY"
 
-class CoincheckConfigMap(BaseConnectorConfigMap):
-    connector: str = Field(default="coincheck", const=True, client_data=None)
-    coincheck_api_key: SecretStr = Field(
+# Update DEFAULT_FEES based on Zaif's actual fee structure
+DEFAULT_FEES = TradeFeeSchema(
+    maker_percent_fee_decimal=Decimal("0.0"),  # Assuming 0% maker fee
+    taker_percent_fee_decimal=Decimal("0.03"),  # Assuming 0% taker fee
+)
+
+def is_pair_information_valid(pair_info: Dict[str, Any]) -> bool:
+    required_keys = ['currency_pair', 'item_unit', 'currency_unit']
+    return all(key in pair_info for key in required_keys)
+
+class ZaifConfigMap(BaseConnectorConfigMap):
+    connector: str = Field(default="zaif", client_data=None)
+    zaif_api_key: SecretStr = Field(
         default=...,
         client_data=ClientFieldData(
-            prompt=lambda cm: "Enter your coincheck API key",
+            prompt=lambda cm: "Enter your Zaif API key",
             is_secure=True,
             is_connect_key=True,
             prompt_on_new=True,
         )
     )
-    coincheck_api_secret: SecretStr = Field(
+    zaif_secret_key: SecretStr = Field(
         default=...,
         client_data=ClientFieldData(
-            prompt=lambda cm: "Enter your coincheck API secret",
+            prompt=lambda cm: "Enter your Zaif secret key",
             is_secure=True,
             is_connect_key=True,
             prompt_on_new=True,
@@ -35,6 +43,7 @@ class CoincheckConfigMap(BaseConnectorConfigMap):
     )
 
     class Config:
-        title = "coincheck"
+        title = "zaif"
 
-KEYS = CoincheckConfigMap.construct()
+KEYS = ZaifConfigMap.construct()
+    

@@ -1,61 +1,95 @@
-# coincheck_auth.py
+# zaif_auth.py
+
 import hashlib
 import hmac
 import time
-import urllib
-import urllib.parse
+from typing import Dict
+from urllib.parse import urlencode
 
-from hummingbot.connector.exchange.coincheck.coincheck_constants import PRIVATE_API_VERSION, REST_URL
 from hummingbot.core.web_assistant.auth import AuthBase
 from hummingbot.core.web_assistant.connections.data_types import RESTRequest, WSRequest
 
 
-class CoincheckAuth(AuthBase):
-    def __init__(self, access_key: str, secret_key: str):
-        self.access_key = access_key
-        self.secret_key = secret_key
-        self._nonce=int(time.time())
-    
-    def _get_nonce(self) -> str:
+class ZaifAuth(AuthBase):
+    def __init__(self, api_key: str, secret_key: str):
+        self.api_key: str = api_key
+        self.secret_key: str = secret_key
+        self._nonce = int(time.time())
+
+    def _get_nonce(self) -> int:
+        """
+        Returns an incremented nonce value for each request.
+        """
         self._nonce += 1
-        return str(self._nonce)
-    
-    def _get_signature(self, message:str):
-            signature = hmac.new(
-                bytes(self.secret_key.encode()),
-                bytes(message.encode()),
-                hashlib.sha256
-            ).hexdigest()
-            return signature
-    
-    def get_headers(self,request_path:str=""):
-        uri=REST_URL+PRIVATE_API_VERSION+request_path
-        message=str(self._nonce)+urllib.parse.urlparse(uri).geturl()
+        return self._nonce
+
+    def get_auth_headers(self, post_data_encoded: str) -> Dict[str, str]:
+        """
+        Generates the required authentication headers for Zaif API.
+
+        :param post_data_encoded: URL-encoded POST data as a string.
+        :return: Dictionary containing 'Key' and 'Sign' headers.
+        """
+        sign = hmac.new(
+            self.secret_key.encode('utf-8'),
+            post_data_encoded.encode('utf-8'),
+            hashlib.sha512
+        ).hexdigest()
+
         headers = {
-            'ACCESS-KEY': self.access_key,
-            'ACCESS-NONCE': str(self._nonce),
-            'ACCESS-SIGNATURE': self._get_signature(message),
-            'Content-Type': 'application/json' 
+            "Key": self.api_key,
+            "Sign": sign,
+            'Content-Type': 'application/x-www-form-urlencoded'
         }
         return headers
 
     async def rest_authenticate(self, request: RESTRequest) -> RESTRequest:
         """
-        Adds the server time and the signature to the request, required for authenticated interactions. It also adds
-        the required parameter in the request header.
+        Adds the required authentication headers and POST data to the request, as per Zaif's API specifications.
+
         :param request: the request to be configured for authenticated interaction
         """
-        headers = {}
-        if request.headers is not None:
-            headers.update(request.headers)
-        headers.update(self.get_headers())
-        request.headers = headers
+        if request.headers is None:
+            request.headers = {}
+
+        # Ensure the request method is POST for private API calls
+        request.method = 'POST'
+
+        # Initialize POST data if not already set
+        if request.data is None:
+            request.data = {}
+
+        # 'method' parameter is required in Zaif's private API
+        if 'method' not in request.data:
+            if request.params and 'method' in request.params:
+                request.data['method'] = request.params.pop('method')
+            else:
+                raise ValueError("Zaif private API requires 'method' parameter in the request data.")
+
+        # Add 'nonce' to the POST data
+        request.data['nonce'] = self._get_nonce()
+
+        # URL encode the POST data
+        post_data_encoded = urlencode(request.data)
+
+        # Generate authentication headers
+        auth_headers = self.get_auth_headers(post_data_encoded)
+
+        # Add authentication headers
+        request.headers.update(auth_headers)
+
+        # Set Content-Type header
+        request.headers["Content-Type"] = "application/x-www-form-urlencoded"
+
+        # Clear the request params as they are now included in data
+        request.params = None
+
 
         return request
 
     async def ws_authenticate(self, request: WSRequest) -> WSRequest:
         """
-        This method is intended to configure a websocket request to be authenticated. Coincheck does not use this
-        functionality
+        Zaif does not provide WebSocket API for private endpoints, so this method is not used.
         """
-        return request  # pass-through
+        return request  # No authentication needed for WebSocket in Zaif
+
