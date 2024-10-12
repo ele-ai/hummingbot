@@ -17,22 +17,13 @@ class ZaifAuth(AuthBase):
         self._nonce = int(time.time())
 
     def _get_nonce(self) -> int:
-        """
-        Returns an incremented nonce value for each request.
-        """
         self._nonce += 1
         return self._nonce
 
     def get_auth_headers(self, post_data_encoded: str) -> Dict[str, str]:
-        """
-        Generates the required authentication headers for Zaif API.
-
-        :param post_data_encoded: URL-encoded POST data as a string.
-        :return: Dictionary containing 'Key' and 'Sign' headers.
-        """
         sign = hmac.new(
-            self.secret_key.encode('utf-8'),
-            post_data_encoded.encode('utf-8'),
+            self.secret_key.encode(),
+            post_data_encoded.encode(),
             hashlib.sha512
         ).hexdigest()
 
@@ -44,11 +35,6 @@ class ZaifAuth(AuthBase):
         return headers
 
     async def rest_authenticate(self, request: RESTRequest) -> RESTRequest:
-        """
-        Adds the required authentication headers and POST data to the request, as per Zaif's API specifications.
-
-        :param request: the request to be configured for authenticated interaction
-        """
         if request.headers is None:
             request.headers = {}
 
@@ -88,8 +74,5 @@ class ZaifAuth(AuthBase):
         return request
 
     async def ws_authenticate(self, request: WSRequest) -> WSRequest:
-        """
-        Zaif does not provide WebSocket API for private endpoints, so this method is not used.
-        """
         return request  # No authentication needed for WebSocket in Zaif
 

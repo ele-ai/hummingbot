@@ -24,7 +24,6 @@ from hummingbot.user.user_balances import UserBalances
 if TYPE_CHECKING:
     from hummingbot.client.hummingbot_application import HummingbotApplication  # noqa: F401
 
-
 class StatusCommand:
     def _expire_old_application_warnings(self,  # type: HummingbotApplication
                                          ):

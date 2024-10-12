@@ -45,11 +45,6 @@ class ZaifAPIUserStreamDataSource(UserStreamTrackerDataSource):
         return ws
 
     async def _subscribe_channels(self, websocket_assistant: WSAssistant):
-        """
-        Subscribes to order events and balance events.
-
-        :param ws: the websocket assistant used to connect to the exchange
-        """
         try:
             orders_change_payload = {
                 "id": web_utils.next_message_id(),

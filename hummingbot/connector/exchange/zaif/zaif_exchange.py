@@ -373,10 +373,10 @@ class ZaifExchange(ExchangePyBase):
             total = free + locked
 
             # 為替レートの取得
-            # exchange_rate = await self.get_exchange_rate(asset)
-            # if exchange_rate is None:
-            #     self.logger().error(f"Exchange rate not found for {asset.upper()}, skipping...")
-            #     continue
+            exchange_rate = await self.get_exchange_rate(asset)
+            if exchange_rate is None:
+                self.logger().error(f"Exchange rate not found for {asset.upper()}, skipping...")
+                continue
 
             # JPY換算額の計算
             balance_jpy = total 
