@@ -1,4 +1,4 @@
-# hummingbot/test/hummingbot/connector/exchange/coincheck/test_zaif_exchange.py
+# hummingbot/test/hummingbot/connector/exchange/zaif/test_zaif_exchange.py
 import asyncio
 import json
 import re
@@ -13,9 +13,9 @@ from bidict import bidict
 
 from hummingbot.client.config.client_config_map import ClientConfigMap
 from hummingbot.client.config.config_helpers import ClientConfigAdapter
-from hummingbot.connector.exchange.coincheck import coincheck_constants as CONSTANTS, coincheck_web_utils as web_utils
-from hummingbot.connector.exchange.coincheck.coincheck_api_order_book_data_source import CoincheckAPIOrderBookDataSource
-from hummingbot.connector.exchange.coincheck.coincheck_exchange import CoincheckExchange
+from hummingbot.connector.exchange.zaif import zaif_constants as CONSTANTS, zaif_web_utils as web_utils
+from hummingbot.connector.exchange.zaif.zaif_api_order_book_data_source import ZaifAPIOrderBookDataSource
+from hummingbot.connector.exchange.zaif.zaif_exchange import ZaifExchange
 from hummingbot.connector.trading_rule import TradingRule
 from hummingbot.connector.utils import get_new_client_order_id
 from hummingbot.core.data_type.common import OrderType, TradeType
@@ -33,7 +33,7 @@ from hummingbot.core.event.events import (
 from hummingbot.core.network_iterator import NetworkStatus
 
 
-class TestCoincheckExchange(unittest.TestCase):
+class TestZaifExchange(unittest.TestCase):
     # the level is required to receive logs from the data source logger
     level = 0
 
@@ -56,7 +56,7 @@ class TestCoincheckExchange(unittest.TestCase):
         self.test_task: Optional[asyncio.Task] = None
         self.client_config_map = ClientConfigAdapter(ClientConfigMap())
 
-        self.exchange = CoincheckExchange(
+        self.exchange = ZaifExchange(
             self.client_config_map,
             self.api_key,
             self.api_secret_key,
@@ -73,14 +73,14 @@ class TestCoincheckExchange(unittest.TestCase):
 
         self._initialize_event_loggers()
 
-        CoincheckAPIOrderBookDataSource._trading_pair_symbol_map = {
+        ZaifAPIOrderBookDataSource._trading_pair_symbol_map = {
             CONSTANTS.DEFAULT_DOMAIN: bidict(
                 {self.ex_trading_pair: self.trading_pair})
         }
 
     def tearDown(self) -> None:
         self.test_task and self.test_task.cancel()
-        CoincheckAPIOrderBookDataSource._trading_pair_symbol_map = {}
+        ZaifAPIOrderBookDataSource._trading_pair_symbol_map = {}
         super().tearDown()
 
     def _initialize_event_loggers(self):
@@ -268,7 +268,7 @@ class TestCoincheckExchange(unittest.TestCase):
         self.assertTrue(self.trading_pair in self.exchange._trading_rules)
 
     def test_initial_status_dict(self):
-        CoincheckAPIOrderBookDataSource._trading_pair_symbol_map = {}
+        ZaifAPIOrderBookDataSource._trading_pair_symbol_map = {}
 
         status_dict = self.exchange.status_dict
 
@@ -496,7 +496,7 @@ class TestCoincheckExchange(unittest.TestCase):
         )
 
     @aioresponses()
-    @patch("hummingbot.connector.exchange.coincheck.coincheck_exchange.CoincheckExchange.get_price")
+    @patch("hummingbot.connector.exchange.zaif.zaif_exchange.ZaifExchange.get_price")
     def test_create_market_order_successfully(self, mock_api, get_price_mock):
         get_price_mock.return_value = Decimal(1000)
         self._simulate_trading_rules_initialized()
