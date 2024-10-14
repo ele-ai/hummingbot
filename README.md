@@ -8,7 +8,7 @@
 
 Hummingbot is an open source  framework that helps you build automated trading strategies, or **bots** that run on cryptocurrency exchanges.
 
-This code is free and publicly available under the Apache 2.0 open source license!
+This code is free and publicly available under the Apache 2.0 open source license!!
 
 ## Why Hummingbot?
 
