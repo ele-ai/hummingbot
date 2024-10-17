@@ -1,9 +1,13 @@
 from typing import Dict, Optional
+import asyncio
+import hummingbot.connector.exchange.coincheck.coincheck_constants as CONSTANTS
 from hummingbot.core.data_type.common import TradeType
 from hummingbot.core.data_type.order_book import OrderBook
 from hummingbot.core.data_type.order_book_message import OrderBookMessage, OrderBookMessageType
 from hummingbot.logger import HummingbotLogger
-
+from hummingbot.core.web_assistant.auth import AuthBase
+from hummingbot.core.web_assistant.connections.data_types import RESTMethod
+from hummingbot.core.web_assistant.web_assistants_factory import WebAssistantsFactory
 
 class CoincheckOrderBook(OrderBook):
     _logger: Optional[HummingbotLogger] = None
@@ -103,3 +107,38 @@ class CoincheckOrderBook(OrderBook):
         print("\nAsks:")
         for ask in asks:
             print(f"Price: {ask[0]}, Amount: {ask[1]}")
+
+    async def fetch_order_book(self, trading_pair: str):
+        """Fetch the order book data from Coincheck API."""
+        try:
+            url = private_rest_url(path_url=f"/api/order_books/{self.format_trading_pair(trading_pair)}")
+            rest_assistant = await self.api_factory.get_rest_assistant()
+            response = await rest_assistant.execute_request(
+                url=url,
+                method=RESTMethod.GET,
+                throttler_limit_id="order_book",
+            )
+
+            # Process the order book data
+            if response and "bids" in response and "asks" in response:
+                self.update_order_book(response["bids"], response["asks"], trading_pair)
+            else:
+                self.logger().error(f"Unexpected response structure: {response}")
+        except Exception as e:
+            self.logger().error(f"Error fetching order book: {e}")
+
+    def update_order_book(self, bids, asks, trading_pair):
+        """Update the internal order book with fetched data."""
+        self.bids = bids
+        self.asks = asks
+        self.logger().info(f"Order book updated for {trading_pair}: Bids: {bids}, Asks: {asks}")
+
+    async def update_order_book_periodically(self, trading_pair: str, interval: int = 30):
+        """Periodically update the order book."""
+        while True:
+            await self.fetch_order_book(trading_pair)
+            await asyncio.sleep(interval)  # Wait for the specified interval before fetching again
+
+    async def start(self):
+        trading_pair = "BRIL/JPY"  # Example trading pair
+        await self.update_order_book_periodically(trading_pair)
