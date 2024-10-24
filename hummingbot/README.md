@@ -2,6 +2,8 @@
 
 This folder contains the main source code for Hummingbot.
 
+Zaif and Coincheck
+## Test commit - Sato
 ## Project Breakdown
 ```
 hummingbot
